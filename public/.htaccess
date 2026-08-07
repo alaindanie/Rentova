@@ -1,0 +1,21 @@
+RewriteEngine On
+
+# Redirection forcée vers HTTPS (commenter pour un usage local HTTP)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Autorise l'accès direct aux fichiers existants (CSS, JS, images…)
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Tout le reste est routé vers le contrôleur frontal
+RewriteRule ^ index.php [QSA,L]
+
+# Bloque l'accès aux fichiers sensibles
+<FilesMatch "^(config\.php|routes\.php)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+Options -Indexes

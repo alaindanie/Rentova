@@ -1,0 +1,20 @@
+# Config personnel
+config/.env
+.env
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Base de données locale (à ne pas versionner si vidée)
+# sql/database.sql  # (décommenter si besoin)
+
+# Fichiers temporaires
+*.tmp
