@@ -1,0 +1,33 @@
+# Config personnel
+config/.env
+.env
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# Base de données locale (à ne pas versionner si vidée)
+# sql/database.sql  # (décommenter si besoin)
+
+# Fichiers temporaires
+*.tmp
+
+# Fichiers uploadés (images des équipements, catégories, profils)
+public/assets/img/equipements/*.jpg
+public/assets/img/equipements/*.jpeg
+public/assets/img/equipements/*.png
+public/assets/img/equipements/*.webp
+public/assets/img/categories/*.jpg
+public/assets/img/categories/*.jpeg
+public/assets/img/categories/*.png
+public/assets/img/categories/*.webp
+public/assets/img/profils/*.jpg
+public/assets/img/profils/*.jpeg
+public/assets/img/profils/*.png
