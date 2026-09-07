@@ -116,13 +116,14 @@ class Location
     {
         $duree = max(1, (int) diff_days($data['date_debut'], $data['date_fin']));
         $montant = round((float) $data['montant_base'], 2);
+        $frais = (float) ($data['montant_frais'] ?? 0);
         return Database::query(
             'UPDATE locations SET
                 equipement_id = :equipement_id,
                 date_debut = :date_debut, date_fin = :date_fin,
                 duree = :duree, quantite = :quantite,
                 montant_base = :montant_base,
-                montant_total = :montant_base + :frais,
+                montant_total = :montant_total,
                 statut = :statut, note = :note
              WHERE id = :id',
             [
@@ -132,7 +133,7 @@ class Location
                 ':duree'         => $duree,
                 ':quantite'      => (int) ($data['quantite'] ?? 1),
                 ':montant_base'  => $montant,
-                ':frais'         => (float) ($data['montant_frais'] ?? 0),
+                ':montant_total' => $montant + $frais,
                 ':statut'        => $data['statut'] ?? 'en_attente',
                 ':note'          => $data['note'] ?? null,
                 ':id'            => $id,

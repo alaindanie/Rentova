@@ -215,6 +215,40 @@ class EquipementController extends Controller
         Router::redirect('dashboard');
     }
 
+    /* --------------------------- Maintenance --------------------------- */
+
+    public function maintenance(string $id): void
+    {
+        $this->requireRole('responsable');
+        $this->verifyCsrf();
+
+        $equipement = Equipement::find((int) $id);
+        if (!$equipement || $equipement['etat'] !== 'disponible') {
+            $this->flash('error', 'Seul un équipement disponible peut être passé en maintenance.');
+        } elseif (Equipement::passerEnMaintenance((int) $id)) {
+            $this->flash('success', "« {$equipement['nom']} » est passé en maintenance. Il n'est plus louable.");
+        } else {
+            $this->flash('error', 'Erreur lors du passage en maintenance.');
+        }
+        Router::redirect('equipements');
+    }
+
+    public function remettreEnService(string $id): void
+    {
+        $this->requireRole('responsable');
+        $this->verifyCsrf();
+
+        $equipement = Equipement::find((int) $id);
+        if (!$equipement || $equipement['etat'] !== 'maintenance') {
+            $this->flash('error', 'Cet équipement n\'est pas actuellement en maintenance.');
+        } elseif (Equipement::remettreEnService((int) $id)) {
+            $this->flash('success', "« {$equipement['nom']} » a été remis en service et est de nouveau disponible à la location.");
+        } else {
+            $this->flash('error', 'Erreur lors de la remise en service.');
+        }
+        Router::redirect('equipements');
+    }
+
     /* --------------------------- Helpers --------------------------- */
 
     private function validateInput(array $d, bool $isUpdate = false): array

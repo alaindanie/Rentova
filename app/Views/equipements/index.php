@@ -95,6 +95,17 @@
                         <div class="row-actions">
                             <a href="<?= BASE_URL ?>equipement/<?= (int) $eq['id'] ?>" class="btn-icon" title="Voir"><i class="fas fa-eye"></i></a>
                             <a href="<?= BASE_URL ?>equipements/modifier/<?= (int) $eq['id'] ?>" class="btn-icon" title="Modifier"><i class="fas fa-pen"></i></a>
+                            <?php if ($eq['etat'] === 'disponible'): ?>
+                            <form method="post" action="<?= BASE_URL ?>equipements/maintenance/<?= (int) $eq['id'] ?>" class="inline-form">
+                                <?= \App\Core\Csrf::field() ?>
+                                <button type="submit" class="btn-icon" title="Passer en maintenance"><i class="fas fa-screwdriver-wrench"></i></button>
+                            </form>
+                            <?php elseif ($eq['etat'] === 'maintenance'): ?>
+                            <form method="post" action="<?= BASE_URL ?>equipements/remettre/<?= (int) $eq['id'] ?>" class="inline-form">
+                                <?= \App\Core\Csrf::field() ?>
+                                <button type="submit" class="btn-icon" title="Remettre en service"><i class="fas fa-user-check"></i></button>
+                            </form>
+                            <?php endif; ?>
                             <a href="<?= BASE_URL ?>equipements/supprimer/<?= (int) $eq['id'] ?>" class="btn-icon danger" title="Supprimer"><i class="fas fa-trash"></i></a>
                         </div>
                     </td>

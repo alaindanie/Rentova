@@ -256,6 +256,24 @@ class Equipement
         )->rowCount() > 0;
     }
 
+    // passe un équipement disponible en maintenance
+    public static function passerEnMaintenance(int $id): bool
+    {
+        return Database::query(
+            'UPDATE equipements SET etat = "maintenance" WHERE id = ? AND etat = "disponible"',
+            [$id]
+        )->rowCount() > 0;
+    }
+
+    // remet en service un équipement revenu de maintenance
+    public static function remettreEnService(int $id): bool
+    {
+        return Database::query(
+            'UPDATE equipements SET etat = "disponible" WHERE id = ? AND etat = "maintenance"',
+            [$id]
+        )->rowCount() > 0;
+    }
+
     // les plus loués (pour le dashboard)
     public static function plusLoues(int $limit = 5): array
     {

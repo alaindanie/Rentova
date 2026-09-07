@@ -31,6 +31,16 @@ class Utilisateur
         return Database::fetch('SELECT * FROM utilisateurs WHERE email = ?', [$email]);
     }
 
+    /** Liste des clients (pour saisir une demande au nom d'un client). */
+    public static function clients(): array
+    {
+        return Database::fetchAll(
+            "SELECT id, nom, prenom, email, telephone FROM utilisateurs
+             WHERE role = 'client'
+             ORDER BY nom ASC, prenom ASC"
+        );
+    }
+
     public static function create(array $data): int
     {
         return Database::insert(

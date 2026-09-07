@@ -749,6 +749,7 @@ button { font-family: inherit; }
 .cell-eq b { display: block; color: var(--ink); }
 .cell-sub { display: block; font-size: .76rem; color: var(--muted); }
 .row-actions { display: flex; align-items: center; gap: 7px; justify-content: flex-end; flex-wrap: wrap; }
+.row-actions form.inline-form { display: inline-flex; margin: 0; }
 .inline { display: inline; }
 .stock-mini { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; padding: 3px 9px; border-radius: 8px; font-size: .82rem; }
 .stock-mini.ok { background: var(--success-100); color: #15803d; }

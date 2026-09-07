@@ -11,6 +11,7 @@ use App\Core\Pdf;
 use App\Models\Location;
 use App\Models\Equipement;
 use App\Models\Categorie;
+use App\Models\Utilisateur;
 
 /**
  * Gestion des locations : demandes, validation, facturation, retours.
@@ -69,26 +70,49 @@ class LocationController extends Controller
     }
 
     /* =========================================================
-     *  DEMANDE DE LOCATION (CLIENT)
+     *  DEMANDE DE LOCATION (CLIENT ou SAISIE PAR L'AGENT)
      * ========================================================= */
 
     public function demande(string $id): void
     {
-        $this->requireRole('client');
+        $this->requireLogin();
         $equipement = Equipement::find((int) $id);
         if (!$equipement) {
             (new ErrorController())->notFound();
             return;
         }
+        $role = Auth::role();
+        if ($role === 'client') {
+            $this->requireRole('client');
+            $clients = [];
+        } else {
+            $this->requireRole(['agent', 'responsable']);
+            $clients = Utilisateur::clients();
+        }
         $this->view('locations/demande', [
             'equipement' => $equipement,
             'old'        => \App\Core\Session::get('old_location') ?? [],
+            'clients'    => $clients,
         ]);
     }
 
     public function storeDemande(string $id): void
     {
-        $this->requireRole('client');
+        $this->requireLogin();
+        $role = Auth::role();
+        if ($role === 'client') {
+            $this->requireRole('client');
+            $clientId = Auth::id();
+        } else {
+            $this->requireRole(['agent', 'responsable']);
+            $clientId = (int) ($_POST['client_id'] ?? 0);
+            $client = Utilisateur::find($clientId);
+            if (!$client || $client['role'] !== 'client') {
+                $this->flash('error', 'Veuillez sélectionner le client concerné par cette demande.');
+                \App\Core\Session::set('old_location', $_POST);
+                Router::redirect('demande/' . $id);
+            }
+        }
         $this->verifyCsrf();
 
         $equipement = Equipement::find((int) $id);
@@ -140,7 +164,7 @@ class LocationController extends Controller
 
         Location::create([
             'reference'     => Location::generateReference(),
-            'client_id'     => Auth::id(),
+            'client_id'     => $clientId,
             'equipement_id' => (int) $id,
             'date_debut'    => $debut,
             'date_fin'      => $fin,
@@ -152,8 +176,157 @@ class LocationController extends Controller
         ]);
 
         \App\Core\Session::remove('old_location');
-        $this->flash('success', 'Votre demande de location a bien été enregistrée. Elle sera traitée par notre équipe.');
-        Router::redirect('mes-locations');
+        if ($role === 'client') {
+            $this->flash('success', 'Votre demande de location a bien été enregistrée. Elle sera traitée par notre équipe.');
+            Router::redirect('mes-locations');
+        }
+        $this->flash('success', 'La demande de location a été enregistrée pour le compte du client. Elle est à traiter.');
+        Router::redirect('locations');
+    }
+
+    /* =========================================================
+     *  MODIFICATION D'UNE DEMANDE EN ATTENTE (CRUD update)
+     * ========================================================= */
+
+    public function editForm(string $id): void
+    {
+        $this->requireRole(['agent', 'responsable']);
+
+        $location = Location::find((int) $id);
+        if (!$location) {
+            $this->flash('error', 'Location introuvable.');
+            Router::redirect('locations');
+        }
+        if ($location['statut'] !== 'en_attente') {
+            $this->flash('error', 'Seules les demandes en attente peuvent être modifiées.');
+            Router::redirect('location/' . $id);
+        }
+
+        $this->view('locations/edit', [
+            'location' => $location,
+            'old'      => \App\Core\Session::get('old_edit_location') ?? [],
+        ]);
+    }
+
+    public function update(string $id): void
+    {
+        $this->requireRole(['agent', 'responsable']);
+        $this->verifyCsrf();
+
+        $location = Location::find((int) $id);
+        if (!$location) {
+            $this->flash('error', 'Location introuvable.');
+            Router::redirect('locations');
+        }
+        if ($location['statut'] !== 'en_attente') {
+            $this->flash('error', 'Cette demande ne peut plus être modifiée.');
+            Router::redirect('location/' . $id);
+        }
+
+        $validator = new Validator($_POST);
+        $validator->validate([
+            'date_debut' => ['Date de début', 'required|date'],
+            'date_fin'   => ['Date de fin', 'required|date|after_or_equal:' . ($_POST['date_debut'] ?? '')],
+            'quantite'   => ['Quantité', 'required|int|min_val:1'],
+            'note'       => ['Note', 'max:500'],
+        ]);
+        if ($validator->fails()) {
+            $this->flash('error', $validator->firstError());
+            \App\Core\Session::set('old_edit_location', $_POST);
+            Router::redirect('location/' . $id . '/modifier');
+        }
+
+        $debut = $_POST['date_debut'];
+        $fin   = $_POST['date_fin'];
+        $qte   = max(1, (int) $_POST['quantite']);
+        if ($fin < date('Y-m-d')) {
+            $this->flash('error', 'La période de location doit être dans le futur.');
+            Router::redirect('location/' . $id . '/modifier');
+        }
+
+        $equipement = Equipement::find((int) $location['equipement_id']);
+        if (!$equipement || $qte > (int) $equipement['stock_disponible']) {
+            $this->flash('error', 'Stock insuffisant pour la quantité demandée.');
+            Router::redirect('location/' . $id . '/modifier');
+        }
+        if (!Location::disponibilite((int) $location['equipement_id'], $debut, $fin, $qte, (int) $id)) {
+            $this->flash('error', 'L\'équipement n\'est pas disponible sur cette période (déjà réservé).');
+            Router::redirect('location/' . $id . '/modifier');
+        }
+
+        $montantBase = round((float) $equipement['prix_jour'] * max(1, diff_days($debut, $fin)) * $qte, 2);
+
+        Location::update((int) $id, [
+            'equipement_id' => (int) $location['equipement_id'],
+            'date_debut'    => $debut,
+            'date_fin'      => $fin,
+            'quantite'      => $qte,
+            'montant_base'  => $montantBase,
+            'montant_frais' => 0,
+            'statut'        => 'en_attente',
+            'note'          => trim($_POST['note'] ?? ''),
+        ]);
+
+        \App\Core\Session::remove('old_edit_location');
+        $this->flash('success', 'La demande ' . $location['reference'] . ' a été mise à jour.');
+        Router::redirect('location/' . $id);
+    }
+
+    /* =========================================================
+     *  SUPPRESSION DÉFINITIVE (CRUD delete — demandes non traitées)
+     * ========================================================= */
+
+    public function deleteForm(string $id): void
+    {
+        $this->requireRole(['agent', 'responsable']);
+
+        $location = Location::find((int) $id);
+        if (!$location) {
+            $this->flash('error', 'Location introuvable.');
+            Router::redirect('locations');
+        }
+        if (!in_array($location['statut'], ['en_attente', 'refusee', 'annulee'], true)) {
+            $this->flash('error', 'Cette location ne peut pas être supprimée définitivement (utilisez l\'annulation).');
+            Router::redirect('location/' . $id);
+        }
+
+        $this->view('confirm/index', [
+            'confirmTitle'   => 'Supprimer la demande ' . $location['reference'],
+            'confirmMessage' => 'Vous êtes sur le point de supprimer définitivement cette demande de location.',
+            'confirmMessage2' => 'Cette action est irréversible et ne libère aucun stock (demande non traitée).',
+            'confirmIcon'    => 'fa-trash',
+            'confirmPost'    => BASE_URL . 'location/' . $id . '/supprimer',
+            'confirmButton'  => 'Supprimer définitivement',
+            'confirmButtonClass' => 'btn-danger-ghost',
+            'confirmButtonIcon'  => 'fa-trash',
+            'backUrl'        => BASE_URL . 'location/' . $id,
+            'backLabel'      => 'Retour à la location',
+            'confirmRows'    => [
+                ['label' => 'Référence',  'value' => $location['reference']],
+                ['label' => 'Équipement', 'value' => $location['equipement_nom'] . ' — ' . $location['marque'] . ' ' . $location['modele']],
+                ['label' => 'Client',      'value' => $location['client_prenom'] . ' ' . $location['client_nom']],
+                ['label' => 'Période',     'value' => date_fr($location['date_debut']) . ' → ' . date_fr($location['date_fin'])],
+                ['label' => 'Statut',      'value' => statut_badge($location['statut'])],
+            ],
+        ]);
+    }
+
+    public function delete(string $id): void
+    {
+        $this->requireRole(['agent', 'responsable']);
+        $this->verifyCsrf();
+
+        $location = Location::find((int) $id);
+        if (!$location) {
+            $this->flash('error', 'Location introuvable.');
+        } elseif (!in_array($location['statut'], ['en_attente', 'refusee', 'annulee'], true)) {
+            $this->flash('error', 'Cette location ne peut pas être supprimée : elle est confirmée, en cours ou terminée.');
+        } elseif (Location::delete((int) $id)) {
+            $this->flash('success', 'La demande ' . $location['reference'] . ' a été supprimée définitivement.');
+        } else {
+            $this->flash('error', 'Erreur lors de la suppression de la demande.');
+        }
+        Router::redirect('locations');
     }
 
     /* =========================================================

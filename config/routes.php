@@ -36,6 +36,8 @@ $router->get('equipements/supprimer/:id', 'EquipementController@deleteForm');
 $router->post('equipements/supprimer/:id','EquipementController@delete');
 $router->post('equipements/reparer/:id',  'EquipementController@reparer');
 $router->post('equipements/remplacer/:id','EquipementController@remplacer');
+$router->post('equipements/maintenance/:id', 'EquipementController@maintenance');
+$router->post('equipements/remettre/:id',    'EquipementController@remettreEnService');
 
 /* Catégories */
 $router->get('categories',              'CategorieController@index');
@@ -77,6 +79,10 @@ $router->get('location/:id/annuler',    'LocationController@annulerForm');
 $router->post('location/:id/annuler',   'LocationController@annuler');
 $router->get('location/:id/retour',     'LocationController@retourForm');
 $router->post('location/:id/retour',    'LocationController@retour');
+$router->get('location/:id/modifier',   'LocationController@editForm');
+$router->post('location/:id/modifier',  'LocationController@update');
+$router->get('location/:id/supprimer',  'LocationController@deleteForm');
+$router->post('location/:id/supprimer', 'LocationController@delete');
 
 /* Documents téléchargeables */
 $router->get('location/:id/facture',    'LocationController@facture');

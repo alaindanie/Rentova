@@ -28,6 +28,21 @@
         <form method="post" action="<?= BASE_URL ?>demande/<?= (int) $equipement['id'] ?>" class="form" data-location-form novalidate>
             <?= \App\Core\Csrf::field() ?>
 
+            <?php if (!empty($clients)): ?>
+            <div class="field">
+                <label for="client_id">Client concerné *</label>
+                <div class="input-wrap"><i class="fas fa-user"></i>
+                    <select name="client_id" id="client_id" data-client-select>
+                        <option value="">— Sélectionner un client —</option>
+                        <?php foreach ($clients as $c): ?>
+                        <option value="<?= (int) $c['id'] ?>" <?= (isset($old['client_id']) && (int) $old['client_id'] === (int) $c['id']) ? 'selected' : '' ?>><?= e($c['prenom']) ?> <?= e($c['nom']) ?> — <?= e($c['email']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <span class="field-error"></span>
+            </div>
+            <?php endif; ?>
+
             <div class="form-grid-2">
                 <div class="field">
                     <label for="date_debut">Date de début *</label>

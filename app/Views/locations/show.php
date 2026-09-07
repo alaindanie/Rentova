@@ -132,10 +132,12 @@ $flowIndex = $flowIndex === false ? 0 : $flowIndex;
                 <?= \App\Core\Csrf::field() ?>
                 <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Confirmer &amp; démarrer</button>
             </form>
+            <a href="<?= BASE_URL ?>location/<?= (int) $location['id'] ?>/modifier" class="btn btn-ghost"><i class="fas fa-pen"></i> Modifier</a>
             <form method="post" action="<?= BASE_URL ?>location/<?= (int) $location['id'] ?>/refuser">
                 <?= \App\Core\Csrf::field() ?>
                 <button type="submit" class="btn btn-danger-ghost"><i class="fas fa-xmark"></i> Refuser</button>
             </form>
+            <a href="<?= BASE_URL ?>location/<?= (int) $location['id'] ?>/supprimer" class="btn btn-danger-ghost"><i class="fas fa-trash"></i> Supprimer</a>
         <?php elseif ($location['statut'] === 'confirmee'): ?>
             <form method="post" action="<?= BASE_URL ?>location/<?= (int) $location['id'] ?>/demarrer">
                 <?= \App\Core\Csrf::field() ?>
@@ -149,8 +151,10 @@ $flowIndex = $flowIndex === false ? 0 : $flowIndex;
         <?php elseif ($location['statut'] === 'terminee'): ?>
             <span class="muted"><i class="fas fa-circle-check"></i> Location terminée. Merci !</span>
         <?php elseif ($location['statut'] === 'refusee'): ?>
+            <a href="<?= BASE_URL ?>location/<?= (int) $location['id'] ?>/supprimer" class="btn btn-danger-ghost"><i class="fas fa-trash"></i> Supprimer</a>
             <span class="muted"><i class="fas fa-circle-xmark"></i> Demande refusée.</span>
         <?php else: ?>
+            <a href="<?= BASE_URL ?>location/<?= (int) $location['id'] ?>/supprimer" class="btn btn-danger-ghost"><i class="fas fa-trash"></i> Supprimer</a>
             <span class="muted"><i class="fas fa-ban"></i> Location annulée.</span>
         <?php endif; ?>
     </div>
