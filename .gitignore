@@ -14,7 +14,7 @@ Thumbs.db
 .idea/
 
 # Base de données locale (à ne pas versionner si vidée)
-# sql/database.sql  # (décommenter si besoin)
+# sql/rentova.sql  # (décommenter si besoin)
 
 # Fichiers temporaires
 *.tmp
