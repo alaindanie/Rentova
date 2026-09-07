@@ -61,9 +61,16 @@
                     <?php else: ?>
                     <div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> Cet équipement est actuellement en rupture de stock.</div>
                     <?php endif; ?>
+                <?php elseif (Auth::check() && in_array(Auth::role(), ['agent', 'responsable'], true)): ?>
+                    <?php if ((int) $equipement['stock_disponible'] > 0): ?>
+                    <a href="<?= BASE_URL ?>demande/<?= (int) $equipement['id'] ?>" class="btn btn-primary btn-lg btn-block">
+                        <i class="fas fa-calendar-plus"></i> Faire une demande pour un client
+                    </a>
+                    <?php else: ?>
+                    <div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> Cet équipement est actuellement en rupture de stock.</div>
+                    <?php endif; ?>
+                    <a href="<?= BASE_URL ?>dashboard" class="btn btn-ghost btn-lg btn-block"><i class="fas fa-arrow-right"></i> Gérer dans mon espace</a>
                 <?php elseif (Auth::check()): ?>
-                    <a href="<?= BASE_URL ?>dashboard" class="btn btn-primary btn-lg btn-block"><i class="fas fa-arrow-right"></i> Gérer dans mon espace</a>
-                <?php else: ?>
                     <a href="<?= BASE_URL ?>login" class="btn btn-primary btn-lg btn-block">
                         <i class="fas fa-right-to-bracket"></i> Connectez-vous pour louer
                     </a>
