@@ -70,7 +70,7 @@
                     <div class="alert alert-danger"><i class="fas fa-circle-exclamation"></i> Cet équipement est actuellement en rupture de stock.</div>
                     <?php endif; ?>
                     <a href="<?= BASE_URL ?>dashboard" class="btn btn-ghost btn-lg btn-block"><i class="fas fa-arrow-right"></i> Gérer dans mon espace</a>
-                <?php elseif (Auth::check()): ?>
+                <?php else: ?>
                     <a href="<?= BASE_URL ?>login" class="btn btn-primary btn-lg btn-block">
                         <i class="fas fa-right-to-bracket"></i> Connectez-vous pour louer
                     </a>
